@@ -1,19 +1,27 @@
 from datetime import datetime
 from decimal import Decimal
 from typing import Dict, Any, List
+from zoneinfo import ZoneInfo
 
-async def calculate_monthly_revenue(property_id: str, month: int, year: int, db_session=None) -> Decimal:
+async def calculate_monthly_revenue(property_id: str, tenant_id: str, month: int, year: int, property_timezone: str = "UTC", db_session=None) -> Decimal:
     """
     Calculates revenue for a specific month.
     """
+    try:
+        tz = ZoneInfo(property_timezone)
+    except Exception:
+        tz = ZoneInfo("UTC")
 
-    start_date = datetime(year, month, 1)
+    start_date = datetime(year, month, 1, tzinfo=tz)
     if month < 12:
-        end_date = datetime(year, month + 1, 1)
+        end_date = datetime(year, month + 1, 1, tzinfo=tz)
     else:
-        end_date = datetime(year + 1, 1, 1)
-        
-    print(f"DEBUG: Querying revenue for {property_id} from {start_date} to {end_date}")
+        end_date = datetime(year + 1, 1, 1, tzinfo=tz)
+
+    start_utc = start_date.astimezone(ZoneInfo("UTC"))
+    end_utc = end_date.astimezone(ZoneInfo("UTC"))
+
+    print(f"DEBUG: Querying revenue for {property_id} from {start_utc} to {end_utc}")
 
     # SQL Simulation (This would be executed against the actual DB)
     query = """
@@ -26,7 +34,7 @@ async def calculate_monthly_revenue(property_id: str, month: int, year: int, db_
     """
     
     # In production this query executes against a database session.
-    # result = await db.fetch_val(query, property_id, tenant_id, start_date, end_date)
+    # result = await db.fetch_val(query, property_id, tenant_id, start_utc, end_utc)
     # return result or Decimal('0')
     
     return Decimal('0') # Placeholder for now until DB connection is finalized
